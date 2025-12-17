@@ -38,4 +38,9 @@ class School extends Model
     {
         return $this->hasMany(Section::class);
     }
+
+    public function students(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
 }

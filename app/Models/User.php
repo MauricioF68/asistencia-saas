@@ -12,10 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -44,15 +45,17 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     // LOGICA FILAMENT: ¿Puede este usuario entrar al panel?
     public function canAccessPanel(Panel $panel): bool
     {
-        // Si es Super Admin, entra a todo.
-        if ($this->is_super_admin) {
-            return true;
+        if ($panel->getId() === 'admin') {
+            // Solo entra si es Super Admin
+            return $this->is_super_admin;
         }
 
-        // Si es un usuario normal (profesor), validaremos más adelante
-        // que solo entre al panel del colegio ('app'), no al admin general.
-        // Por ahora retornamos true para facilitar pruebas, luego restringiremos.
-        return true; 
+        if ($panel->getId() === 'app') {
+            // A la App entran todos los que tengan al menos 1 colegio asignado
+            return $this->schools()->exists();
+        }
+
+        return false; 
     }
 
     // LOGICA TENANCY: ¿A qué colegios tiene acceso este usuario?
